@@ -1,48 +1,68 @@
-import pandas as pd
+# data_generator.py
 import numpy as np
+import pandas as pd
+import os
 
 np.random.seed(42)
 
-# 50 roll numbers
-roll_numbers = np.arange(101, 151)
+ROLLS = np.arange(101, 151)  # 50 students
+YEARS = [2021, 2022, 2023, 2024]
 
-# Generate 3 years of history for each student
-years = [2021, 2022, 2023]
+def generate_row(roll, year):
+    # base personal tendency per student for some realism
+    base_skill = np.random.normal(70, 8)  # baseline quality
+    study_hours = np.round(np.random.normal(6, 2), 1)
+    study_hours = float(np.clip(study_hours, 0, 12))
+    attendance = float(np.clip(np.random.normal(80, 10), 40, 100))
+    previous_grade = float(np.clip(base_skill + np.random.normal(0, 6), 30, 100))
+    parental_support = int(np.random.choice([1,2,3,4,5], p=[0.06,0.14,0.35,0.30,0.15]))
+    extracurricular = int(np.random.choice([0,1,2,3,4,5], p=[0.10,0.20,0.30,0.25,0.10,0.05]))
+    sleep_hours = float(np.round(np.random.normal(7, 1.2), 1))
+    assignments_completed = float(np.clip(np.random.normal(78, 15), 0, 100))
 
-rows = []
-for roll in roll_numbers:
-    for yr in years:
-        study = np.round(np.random.uniform(2, 10), 1)
-        attendance = np.random.randint(50, 100)
-        prev_grade = np.random.randint(40, 95)
-        sleep = np.round(np.random.uniform(5, 9), 1)
-        assignments = np.random.randint(5, 10)
-        # age = np.random.randint(15, 18)
+    # weighted score used to compute final grade (same as your earlier idea)
+    perf_score = (
+        study_hours / 12 * 25 +
+        attendance / 100 * 20 +
+        previous_grade / 100 * 20 +
+        parental_support / 5 * 15 +
+        extracurricular / 5 * 10 +
+        sleep_hours / 12 * 5 +
+        assignments_completed / 100 * 5
+    )
 
-        # Final grade slightly influenced by input
-        final_grade = int(
-            study / 10 * 20 +
-            attendance / 100 * 25 +
-            prev_grade / 100 * 35 +
-            sleep / 10 * 10 +
-            assignments / 10 * 10 +
-            np.random.randint(-5, 5)
-        )
+    perf_score += np.random.normal(0, 4)  # noise
+    final_grade = float(np.clip(perf_score, 0, 100).round(1))
 
-        performance = (
-            "High" if final_grade >= 80 else
-            "Medium" if final_grade >= 60 else
-            "Low"
-        )
+    performance = "High" if final_grade >= 80 else ("Medium" if final_grade >= 60 else "Low")
 
-        rows.append([roll, yr, study, attendance, prev_grade,
-                     sleep, assignments, final_grade, performance])
+    return {
+        "roll_no": int(roll),
+        "year": int(year),
+        "study_hours": study_hours,
+        "attendance": attendance,
+        "previous_grade": previous_grade,
+        "parental_support": parental_support,
+        "extracurricular": extracurricular,
+        "sleep_hours": sleep_hours,
+        "assignments_completed": assignments_completed,
+        "final_grade": final_grade,
+        "performance": performance
+    }
 
-df = pd.DataFrame(rows, columns=[
-    "roll_no", "year", "study_hours", "attendance",
-    "previous_grade", "sleep_hours", "assignments_completed",
-     "final_grade", "performance"
-])
+def main(output_dir=".", n_per_year_per_roll=1):
+    rows = []
+    for roll in ROLLS:
+        # add per-roll baseline variation by setting a seed dependency on roll
+        for year in YEARS:
+            row = generate_row(roll, year)
+            rows.append(row)
 
-df.to_csv("student_history.csv", index=False)
-print("Generated student_history.csv with 50 roll numbers × 3 years")
+    df = pd.DataFrame(rows)
+    os.makedirs(output_dir, exist_ok=True)
+    out_path = os.path.join(output_dir, "student_history.csv")
+    df.to_csv(out_path, index=False)
+    print(f"Saved {len(df)} rows to {out_path}")
+
+if __name__ == "__main__":
+    main()

@@ -1,1 +1,1 @@
-["study_hours", "attendance", "previous_grade", "parental_support", "extracurricular", "sleep_hours", "assignments_completed", "age"]
+["hist_mean_final", "hist_last_final", "hist_trend", "hist_std_final", "hist_mean_study", "hist_mean_attendance", "hist_count", "study_hours", "attendance", "previous_grade", "parental_support", "extracurricular", "sleep_hours", "assignments_completed"]
